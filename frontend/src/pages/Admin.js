@@ -1,4 +1,4 @@
-// src/pages/Admin.js
+﻿// src/pages/Admin.js
 import React, { useState, useEffect } from "react";
 import {
   getOrders,
@@ -8,13 +8,19 @@ import {
   updateProductStock,
 } from "../services/adminApi";
 
+const ORDER_STATUS = {
+  PENDING: "En attente",
+  PROCESSING: "En cours de traitement",
+  SHIPPED: "Expediee",
+};
+
 const Admin = () => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(null);
   const [newStock, setNewStock] = useState({}); // Stock temporaire par produit
-  const [updatingStock, setUpdatingStock] = useState(null); // Stock en cours de mise à jour
+  const [updatingStock, setUpdatingStock] = useState(null); // Stock en cours de mise a jour
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,51 +39,51 @@ const Admin = () => {
     try {
       await updateOrderStatus(orderId, newStatus);
 
-      // Mettre à jour l'état local après une mise à jour réussie
+      // Mettre a jour l'etat local apres une mise a jour reussie
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, status: newStatus } : order
         )
       );
 
-      alert(`Statut de la commande ${orderId} mis à jour en "${newStatus}".`);
+      alert(`Statut de la commande ${orderId} mis a jour en "${newStatus}".`);
     } catch (error) {
-      alert("Erreur lors de la mise à jour du statut de la commande.");
+      alert("Erreur lors de la mise a jour du statut de la commande.");
     }
-    setLoadingOrder(null); // Désactive le loader
+    setLoadingOrder(null); // Desactive le loader
   };
 
   // const handleOrderValidation = async (orderId) => {
   //   await validateOrder(orderId);
-  //   alert(`Commande ${orderId} validée.`);
+  //   alert(`Commande ${orderId} validee.`);
   // };
 
   const handleStockUpdate = async (productId) => {
-    const stockValue = newStock[productId]; // Récupère la valeur saisie pour ce produit
+    const stockValue = newStock[productId]; // Recupere la valeur saisie pour ce produit
 
     if (!stockValue || stockValue < 0) {
-      alert("Veuillez entrer une quantité de stock valide.");
+      alert("Veuillez entrer une quantite de stock valide.");
       return;
     }
 
     try {
       setUpdatingStock(productId); // Active le loader
       await updateProductStock(productId, stockValue);
-      alert(`Stock du produit mis à jour à ${stockValue}.`);
+      alert(`Stock du produit mis a jour a ${stockValue}.`);
 
-      // Mise à jour de l'affichage avec le nouveau stock
+      // Mise a jour de l'affichage avec le nouveau stock
       const updatedProducts = products.map((product) =>
         product._id === productId ? { ...product, stock: stockValue } : product
       );
       setProducts(updatedProducts);
 
-      // Réinitialisation du champ
+      // Reinitialisation du champ
       setNewStock({ ...newStock, [productId]: "" });
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du stock :", error);
-      alert("Échec de la mise à jour du stock.");
+      console.error("Erreur lors de la mise a jour du stock :", error);
+      alert("Echec de la mise a jour du stock.");
     } finally {
-      setUpdatingStock(null); // Désactive le loader
+      setUpdatingStock(null); // Desactive le loader
     }
   };
 
@@ -96,25 +102,27 @@ const Admin = () => {
               <p>
                 <strong>Status :</strong> {order.status}
               </p>
-              {order.status !== "Expédiée" && (
+              {order.status !== ORDER_STATUS.SHIPPED && (
                 <button
-                  onClick={() => handleOrderStatusChange(order._id, "Expédiée")}
+                  onClick={() =>
+                    handleOrderStatusChange(order._id, ORDER_STATUS.SHIPPED)
+                  }
                   className="bg-blue-500 text-white px-2 py-1 mt-2 rounded mr-2"
                   disabled={loadingOrder === order._id}
                 >
                   {loadingOrder === order._id
-                    ? "Mise à jour..."
-                    : 'Changer état à "Expédiée"'}
+                    ? "Mise a jour..."
+                    : 'Changer etat a "Expediee"'}
                 </button>
               )}
 
-              {order.status !== "En cours de traitement" &&
-                order.status !== "Expédiée" && (
+              {order.status !== ORDER_STATUS.PROCESSING &&
+                order.status !== ORDER_STATUS.SHIPPED && (
                   <button
                     onClick={() =>
                       handleOrderStatusChange(
                         order._id,
-                        "En cours de traitement"
+                        ORDER_STATUS.PROCESSING
                       )
                     }
                     className="bg-green-500 text-white px-2 py-1 mt-2 rounded"
@@ -127,7 +135,7 @@ const Admin = () => {
                 onClick={() => setSelectedOrder(order)}
                 className="bg-gray-500 text-white ml-2 px-2 py-1 mt-2 rounded"
               >
-                Détails
+                Details
               </button>
             </li>
           ))}
@@ -172,8 +180,8 @@ const Admin = () => {
                     disabled={updatingStock === product._id}
                   >
                     {updatingStock === product._id
-                      ? "Mise à jour..."
-                      : "Mettre à jour"}
+                      ? "Mise a jour..."
+                      : "Mettre a jour"}
                   </button>
                 </td>
               </tr>
@@ -182,11 +190,11 @@ const Admin = () => {
         </table>
       </div>
 
-      {/* Fenêtre modale pour afficher les détails de la commande */}
+      {/* Fenetre modale pour afficher les details de la commande */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-            <h2 className="text-xl font-bold mb-4">Détails de la Commande</h2>
+            <h2 className="text-xl font-bold mb-4">Details de la Commande</h2>
             <p>
               <strong>ID :</strong> {selectedOrder._id}
             </p>
@@ -204,7 +212,7 @@ const Admin = () => {
                     <strong>Produit ID :</strong> {item.productId}
                   </p>
                   <p>
-                    <strong>Quantité :</strong> {item.quantity}
+                    <strong>Quantite :</strong> {item.quantity}
                   </p>
                   <p>
                     <strong>Prix :</strong> {item.price} €
@@ -226,3 +234,4 @@ const Admin = () => {
 };
 
 export default Admin;
+

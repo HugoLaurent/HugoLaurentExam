@@ -1,4 +1,6 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const sanitizeString = (value = "") =>
+  typeof value === "string" ? value.replace(/[<>]/g, "").trim() : value;
 
 // Define the schema for individual order items
 const orderItemSchema = new mongoose.Schema({
@@ -33,24 +35,30 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['En attente', 'En cours de traitement', 'Expédiée', 'Délivrée', 'Annulée'],
+      enum: ['En attente', 'En cours de traitement', 'Expediee', 'Delivree', 'Annulee'],
       default: 'En attente',
+      trim: true,
+      set: sanitizeString,
     },
     shippingAddress: {
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      postalCode: { type: String, required: true },
-      country: { type: String, required: true },
+      street: { type: String, required: true, trim: true, set: sanitizeString },
+      city: { type: String, required: true, trim: true, set: sanitizeString },
+      postalCode: { type: String, required: true, trim: true, set: sanitizeString },
+      country: { type: String, required: true, trim: true, set: sanitizeString },
     },
     paymentMethod: {
       type: String,
       enum: ['Carte bancaire', 'PayPal', 'Virement'],
       required: true,
+      trim: true,
+      set: sanitizeString,
     },
     shippingMethod: {
       type: String,
       enum: ['colissimo', 'chronopost'],
       required: true,
+      trim: true,
+      set: sanitizeString,
     },
     createdAt: {
       type: Date,
@@ -70,3 +78,4 @@ const orderSchema = new mongoose.Schema(
 const Order = mongoose.model('Order', orderSchema);
 
 module.exports = Order;
+

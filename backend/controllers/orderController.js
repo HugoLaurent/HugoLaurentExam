@@ -1,42 +1,96 @@
-// backend/controllers/orderController.js
+﻿// backend/controllers/orderController.js
 const axios = require("axios");
+const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const orderLog = require("debug")("orderRoutes:console");
 
 const GATEWAY_SERVICE_URL =
   process.env.GATEWAY_SERVICE_URL || "http://localhost:8000";
+const VALID_PAYMENT_METHODS = ["Carte bancaire", "PayPal", "Virement"];
+const VALID_SHIPPING_METHODS = ["colissimo", "chronopost"];
+const sanitizeString = (value = "") =>
+  typeof value === "string" ? value.replace(/[<>]/g, "").trim() : "";
 
 exports.createOrder = async (req, res) => {
-  //userLog(`user is ${JSON.stringify(req.user)}`)
-  //const { items, shippingAddress, paymentMethod } = req.body;
   const { items, shippingAddress, paymentMethod, shippingMethod } = req.body;
-  //const { items } = req.body;
-  let userId = req.user.userId;
-  // let shippingAddress = {
-  //   "street": "123 Main St",
-  //   "city": "New York",
-  //   "postalCode": "10001",
-  //   "country": "USA"
-  // };
-
-  // let paymentMethod =  "Carte bancaire";
-
-  // Vérification du format des données
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({
-      message:
-        "Le corps de la requête doit contenir un tableau d'objets { productId, quantity }.",
-    });
-  }
+  const userId = req.user.userId;
 
   try {
-    // Logique pour préparer les détails de la commande
-    const orderDetails = items.map(({ productId, quantity, price }) => {
-      return { productId, quantity, price };
-    });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        message:
+          "Le corps de la requete doit contenir un tableau d'objets { productId, quantity, price }.",
+      });
+    }
 
-    // Création de la commande dans la base de données
-    const total = items.reduce(
+    const orderDetails = [];
+    for (let index = 0; index < items.length; index++) {
+      const { productId, quantity, price } = items[index] || {};
+
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        return res.status(400).json({
+          message: `productId invalide pour l'item #${index + 1}.`,
+        });
+      }
+
+      const parsedQuantity = Number(quantity);
+      if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+        return res.status(400).json({
+          message: `Quantite invalide pour l'item #${index + 1}.`,
+        });
+      }
+
+      const parsedPrice = Number(price);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+        return res.status(400).json({
+          message: `Prix invalide pour l'item #${index + 1}.`,
+        });
+      }
+
+      orderDetails.push({
+        productId,
+        quantity: parsedQuantity,
+        price: parsedPrice,
+      });
+    }
+
+    if (
+      !shippingAddress ||
+      typeof shippingAddress !== "object" ||
+      Array.isArray(shippingAddress)
+    ) {
+      return res.status(400).json({
+        message: "Adresse de livraison manquante ou invalide.",
+      });
+    }
+
+    const requiredAddressFields = ["street", "city", "postalCode", "country"];
+    const normalizedAddress = {};
+    for (const field of requiredAddressFields) {
+      const value = sanitizeString(shippingAddress[field]);
+      if (!value) {
+        return res.status(400).json({
+          message: `Champ d'adresse "${field}" manquant ou invalide.`,
+        });
+      }
+      normalizedAddress[field] = value;
+    }
+
+    const cleanPaymentMethod = sanitizeString(paymentMethod);
+    if (!VALID_PAYMENT_METHODS.includes(cleanPaymentMethod)) {
+      return res.status(400).json({
+        message: "Methode de paiement invalide.",
+      });
+    }
+
+    const cleanShippingMethod = sanitizeString(shippingMethod);
+    if (!VALID_SHIPPING_METHODS.includes(cleanShippingMethod)) {
+      return res.status(400).json({
+        message: "Methode de livraison invalide.",
+      });
+    }
+
+    const total = orderDetails.reduce(
       (acc, { price, quantity }) => acc + price * quantity,
       0
     );
@@ -45,23 +99,21 @@ exports.createOrder = async (req, res) => {
       userId,
       items: orderDetails,
       total,
-      shippingAddress,
-      paymentMethod,
-      shippingMethod,
+      shippingAddress: normalizedAddress,
+      paymentMethod: cleanPaymentMethod,
+      shippingMethod: cleanShippingMethod,
     });
 
-    // Sauvegarder la commande dans la base de données
     const savedOrder = await newOrder.save();
 
-    // Appel au micro-service de notification
     try {
       await axios.post(`${GATEWAY_SERVICE_URL}/notify`, {
         to: "syaob@yahoo.fr",
-        subject: "Nouvelle Commande Créée",
-        text: `Une commande a été créée avec succès pour les produits suivants : \n${orderDetails
+        subject: "Nouvelle Commande Cree",
+        text: `Une commande a ete creee avec succes pour les produits suivants : \n${orderDetails
           .map(
             (item) =>
-              `Produit ID : ${item.productId}, Quantité : ${item.quantity}`
+              `Produit ID : ${item.productId}, Quantite : ${item.quantity}`
           )
           .join("\n")}`,
       });
@@ -69,26 +121,14 @@ exports.createOrder = async (req, res) => {
       console.error("Erreur lors de l'envoi de la notification", error);
     }
 
-    // Appel au micro-service de gestion des stocks
-    // try {
-    //   await Promise.all(
-    //     items.map(({ productId, quantity }) =>
-    //       axios.post('http://localhost:8000/update-stock', { productId, quantity })
-    //     )
-    //   );
-    // } catch (error) {
-    //   console.error('Erreur lors de la mise à jour des stocks', error);
-    // }
-
-    // Réponse de succès
     res.status(201).json({
-      message: "Commande créée avec succès",
+      message: "Commande creee avec succes",
       order: savedOrder,
     });
   } catch (error) {
-    console.error("Erreur lors de la création de la commande", error);
+    console.error("Erreur lors de la creation de la commande", error);
     res.status(500).json({
-      message: "Une erreur est survenue lors de la création de la commande.",
+      message: "Une erreur est survenue lors de la creation de la commande.",
     });
   }
 };
@@ -97,15 +137,15 @@ exports.createOrder = async (req, res) => {
 //     const products = req.body; // Attente d'un tableau d'objets { productId, quantity }
 //     console.log(`products are ${JSON.stringify(products)}`)
 
-//     // // Vérification du format des données
+//     // // Verification du format des donnees
 //     if (!Array.isArray(products.items) || products.items.length === 0) {
-//       return res.status(400).json({ message: 'Le corps de la requête doit contenir un tableau d\'objets { productId, quantity }.' });
+//       return res.status(400).json({ message: 'Le corps de la requete doit contenir un tableau d\'objets { productId, quantity }.' });
 //     }
 
 //     try {
 //     //   // Logique pour traiter chaque produit de la commande
 //       const orderDetails = products.items.map(({ productId, quantity }) => {
-//         console.log(`Produit ID : ${productId}, Quantité : ${quantity}`);
+//         console.log(`Produit ID : ${productId}, Quantite : ${quantity}`);
 //         return { productId, quantity };
 //       });
 
@@ -115,9 +155,9 @@ exports.createOrder = async (req, res) => {
 //       try {
 //         await axios.post('http://localhost:8000/notify', {
 //           to: "syaob@yahoo.fr",
-//           subject: 'Nouvelle Commande Créée',
-//           text: `Une commande a été créée avec succès pour les produits suivants : \n${orderDetails
-//             .map((item) => `Produit ID : ${item.productId}, Quantité : ${item.quantity}`)
+//           subject: 'Nouvelle Commande Cree',
+//           text: `Une commande a ete creee avec succes pour les produits suivants : \n${orderDetails
+//             .map((item) => `Produit ID : ${item.productId}, Quantite : ${item.quantity}`)
 //             .join('\n')}`,
 //         });
 //       } catch (error) {
@@ -132,17 +172,17 @@ exports.createOrder = async (req, res) => {
 //           )
 //         );
 //       } catch (error) {
-//         console.error('Erreur lors de la mise à jour des stocks', error);
+//         console.error('Erreur lors de la mise a jour des stocks', error);
 //       }
 
-//       // Réponse de succès
+//       // Reponse de succes
 //       res.status(201).json({
-//         message: 'Commande créée avec succès',
+//         message: 'Commande creee avec succes',
 //         orderDetails,
 //       });
 //     } catch (error) {
-//       console.error('Erreur lors de la création de la commande', error);
-//       res.status(500).json({ message: 'Une erreur est survenue lors de la création de la commande.' });
+//       console.error('Erreur lors de la creation de la commande', error);
+//       res.status(500).json({ message: 'Une erreur est survenue lors de la creation de la commande.' });
 //     }
 //   };
 
@@ -157,7 +197,10 @@ exports.getOrders = async (req, res) => {
 
 exports.validateOrder = async (req, res) => {
   const { orderId } = req.body;
-  res.status(200).json({ message: `Commande ${orderId} validée avec succès.` });
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res.status(400).json({ message: "orderId invalide." });
+  }
+  res.status(200).json({ message: `Commande ${orderId} validee avec succes.` });
 };
 
 exports.updateOrderStatus = async (req, res) => {
@@ -165,25 +208,30 @@ exports.updateOrderStatus = async (req, res) => {
   const { status } = req.body;
 
   try {
-    // Vérification des données
-    if (!status) {
-      return res.status(400).json({ message: "Le statut est requis." });
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ message: "orderId invalide." });
     }
 
-    // Recherche de la commande et mise à jour
+    const cleanStatus = sanitizeString(status);
+    const allowedStatuses = Order.schema.path("status")?.enumValues || [];
+    if (!cleanStatus || !allowedStatuses.includes(cleanStatus)) {
+      return res.status(400).json({ message: "Statut invalide." });
+    }
+
     const order = await Order.findByIdAndUpdate(
       orderId,
-      { status, updatedAt: new Date() }, // Mise à jour du statut et de la date de modification
-      { new: true } // Retourne la commande mise à jour
+      { status: cleanStatus, updatedAt: new Date() },
+      { new: true, runValidators: true }
     );
 
     if (!order) {
-      return res.status(404).json({ message: "Commande non trouvée." });
+      return res.status(404).json({ message: "Commande non trouvee." });
     }
 
-    res.status(200).json({ message: "Statut mis à jour avec succès", order });
+    res.status(200).json({ message: "Statut mis a jour avec succes", order });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la commande :", error);
+    console.error("Erreur lors de la mise a jour de la commande :", error);
     res.status(500).json({ message: "Erreur serveur." });
   }
 };
+
