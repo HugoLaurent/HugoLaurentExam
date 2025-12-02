@@ -1,12 +1,10 @@
 // src/services/api.js
 import axios from "axios";
 
-const API_BASE_URL = `https://hugolaurent-frontend.onrender.com/api`;
-console.log(
-  "L'ERREUR ELLE EST LA?????",
-  process.env.REACT_APP_API_URL,
-  API_BASE_URL
-);
+// Use backend URL from env when provided, fallback to local dev backend
+const API_BASE_URL = `${
+  process.env.REACT_APP_API_URL || "http://localhost:5000"
+}/api`;
 
 export const fetchProducts = () => axios.get(`${API_BASE_URL}/products`);
 
