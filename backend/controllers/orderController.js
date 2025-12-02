@@ -4,6 +4,8 @@ const Order = require('../models/Order');
 const orderLog = require('debug')('orderRoutes:console')
 
 
+const GATEWAY_SERVICE_URL = process.env.GATEWAY_SERVICE_URL || 'http://localhost:8000';
+
 exports.createOrder = async (req, res) => {
   //userLog(`user is ${JSON.stringify(req.user)}`)
   console.log(`user is in createOrder ${JSON.stringify(req.user)}`)
@@ -58,7 +60,7 @@ exports.createOrder = async (req, res) => {
 
     // Appel au micro-service de notification
     try {
-      await axios.post('http://localhost:8000/notify', {
+      await axios.post(`${GATEWAY_SERVICE_URL}/notify`, {
         to: 'syaob@yahoo.fr',
         subject: 'Nouvelle Commande Créée',
         text: `Une commande a été créée avec succès pour les produits suivants : \n${orderDetails

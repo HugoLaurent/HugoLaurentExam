@@ -13,7 +13,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/mydatabase
+      - MONGO_URI=mongodb://appuser:apppassword@mongo:27017/mydatabase?authSource=admin
       - PORT=5000
       - JWT_SECRET=6fddcda3c505f95b1bae75879062acd36de8607f7eda4b23a7c154eb26b7d708
     depends_on:
@@ -21,6 +21,9 @@ services:
 
   mongo:
     image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=appuser
+      - MONGO_INITDB_ROOT_PASSWORD=apppassword
     ports:
       - "27018:27017"
 
