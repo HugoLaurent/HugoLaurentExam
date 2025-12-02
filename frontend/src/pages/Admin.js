@@ -1,4 +1,4 @@
-﻿// src/pages/Admin.js
+// src/pages/Admin.js
 import React, { useState, useEffect } from "react";
 import {
   getOrders,
@@ -7,6 +7,7 @@ import {
   getProducts,
   updateProductStock,
 } from "../services/adminApi";
+import { useToast } from "../components/ToastProvider";
 
 const ORDER_STATUS = {
   PENDING: "En attente",
@@ -19,8 +20,9 @@ const Admin = () => {
   const [products, setProducts] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(null);
-  const [newStock, setNewStock] = useState({}); // Stock temporaire par produit
-  const [updatingStock, setUpdatingStock] = useState(null); // Stock en cours de mise a jour
+  const [newStock, setNewStock] = useState({});
+  const [updatingStock, setUpdatingStock] = useState(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,62 +37,56 @@ const Admin = () => {
   }, []);
 
   const handleOrderStatusChange = async (orderId, newStatus) => {
-    setLoadingOrder(orderId); // Active le loader
+    setLoadingOrder(orderId);
     try {
       await updateOrderStatus(orderId, newStatus);
 
-      // Mettre a jour l'etat local apres une mise a jour reussie
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, status: newStatus } : order
         )
       );
 
-      alert(`Statut de la commande ${orderId} mis a jour en "${newStatus}".`);
+      showToast(
+        `Statut de la commande ${orderId} mis a jour en "${newStatus}".`,
+        "success"
+      );
     } catch (error) {
-      alert("Erreur lors de la mise a jour du statut de la commande.");
+      showToast("Erreur lors de la mise a jour du statut de la commande.", "error");
     }
-    setLoadingOrder(null); // Desactive le loader
+    setLoadingOrder(null);
   };
 
-  // const handleOrderValidation = async (orderId) => {
-  //   await validateOrder(orderId);
-  //   alert(`Commande ${orderId} validee.`);
-  // };
-
   const handleStockUpdate = async (productId) => {
-    const stockValue = newStock[productId]; // Recupere la valeur saisie pour ce produit
+    const stockValue = newStock[productId];
 
     if (!stockValue || stockValue < 0) {
-      alert("Veuillez entrer une quantite de stock valide.");
+      showToast("Veuillez entrer une quantite de stock valide.", "error");
       return;
     }
 
     try {
-      setUpdatingStock(productId); // Active le loader
+      setUpdatingStock(productId);
       await updateProductStock(productId, stockValue);
-      alert(`Stock du produit mis a jour a ${stockValue}.`);
+      showToast(`Stock du produit mis a jour a ${stockValue}.`, "success");
 
-      // Mise a jour de l'affichage avec le nouveau stock
       const updatedProducts = products.map((product) =>
         product._id === productId ? { ...product, stock: stockValue } : product
       );
       setProducts(updatedProducts);
 
-      // Reinitialisation du champ
       setNewStock({ ...newStock, [productId]: "" });
     } catch (error) {
       console.error("Erreur lors de la mise a jour du stock :", error);
-      alert("Echec de la mise a jour du stock.");
+      showToast("Echec de la mise a jour du stock.", "error");
     } finally {
-      setUpdatingStock(null); // Desactive le loader
+      setUpdatingStock(null);
     }
   };
 
   return (
     <div className="p-8">
       <h2 className="text-2xl font-bold mb-4">Page d'administration</h2>
-      {/* Gestion des Commandes */}
       <div className="mb-6">
         <h3 className="text-xl font-semibold">Gestion des Commandes</h3>
         <ul>
@@ -142,7 +138,6 @@ const Admin = () => {
         </ul>
       </div>
 
-      {/* Gestion des Produits */}
       <div>
         <h2 className="text-xl font-bold">Gestion des Produits</h2>
         <table className="min-w-full border">
@@ -158,7 +153,7 @@ const Admin = () => {
             {products.map((product) => (
               <tr key={product._id} className="border">
                 <td className="border px-4 py-2">{product.name}</td>
-                <td className="border px-4 py-2">{product.price} €</td>
+                <td className="border px-4 py-2">{product.price} EUR</td>
                 <td className="border px-4 py-2">{product.stock}</td>
                 <td className="border px-4 py-2 flex">
                   <input
@@ -190,7 +185,6 @@ const Admin = () => {
         </table>
       </div>
 
-      {/* Fenetre modale pour afficher les details de la commande */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
@@ -202,7 +196,7 @@ const Admin = () => {
               <strong>Status :</strong> {selectedOrder.status}
             </p>
             <p>
-              <strong>Total :</strong> {selectedOrder.total} €
+              <strong>Total :</strong> {selectedOrder.total} EUR
             </p>
             <h3 className="text-lg font-semibold mt-4">Produits :</h3>
             <ul className="mt-2">
@@ -215,7 +209,7 @@ const Admin = () => {
                     <strong>Quantite :</strong> {item.quantity}
                   </p>
                   <p>
-                    <strong>Prix :</strong> {item.price} €
+                    <strong>Prix :</strong> {item.price} EUR
                   </p>
                 </li>
               ))}
@@ -234,4 +228,3 @@ const Admin = () => {
 };
 
 export default Admin;
-

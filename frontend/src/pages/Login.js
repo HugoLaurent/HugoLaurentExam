@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useToast } from "../components/ToastProvider";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
@@ -9,6 +10,7 @@ const Login = () => {
     password: "",
   });
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,22 +23,19 @@ const Login = () => {
       );
       const { token, role, username } = response.data;
 
-      // Stockage du token et rôle dans le localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
       localStorage.setItem("role", role);
 
-      navigate("/"); // Redirige vers la page d'accueil après la connexion
+      showToast("Connexion reussie", "success");
+      navigate("/");
     } catch (error) {
-      // Gestion des erreurs
       if (error.response) {
-        // Erreur renvoyée par le serveur
         const { message } = error.response.data;
-        alert(message); // Affiche un message à l'utilisateur (vous pouvez remplacer par un toast)
+        showToast(message, "error");
       } else {
-        // Erreur réseau ou autre
-        console.error("Erreur réseau ou serveur", error);
-        alert("Une erreur est survenue. Veuillez réessayer.");
+        console.error("Erreur reseau ou serveur", error);
+        showToast("Une erreur est survenue. Veuillez reessayer.", "error");
       }
     }
   };

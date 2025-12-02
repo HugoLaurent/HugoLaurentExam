@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useToast } from "../components/ToastProvider";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const Register = () => {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleChange = (e) => {
     setFormData({
@@ -54,7 +56,7 @@ const Register = () => {
     }
 
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-      setError("Le mot de passe doit contenir au moins un caractère spécial.");
+      setError("Le mot de passe doit contenir au moins un caractere special.");
       return;
     }
     setError("");
@@ -63,7 +65,7 @@ const Register = () => {
       const apiUrl =
         process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";
       await axios.post(`${apiUrl}/api/auth/register`, formData);
-      alert("Inscription reussie ! Vous pouvez maintenant vous connecter.");
+      showToast("Inscription reussie ! Vous pouvez maintenant vous connecter.", "success");
       navigate("/login");
     } catch (err) {
       if (err.response) {
