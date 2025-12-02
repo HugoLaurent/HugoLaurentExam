@@ -17,11 +17,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-console.log(`rocess.env.EMAIL_USER is ${process.env.EMAIL_USER} process.env.EMAIL_APPLICATION_PASSWORD is ${process.env.EMAIL_APPLICATION_PASSWORD}`);
 // Route pour envoyer un email
 app.post('/notify', async (req, res) => {
   const { to, subject, text } = req.body;
-  console.log(`to is ${to} subject is ${subject} text is ${text}`)
 
   //const { message } = req.body;
     //console.log(`Notification: ${text}`);

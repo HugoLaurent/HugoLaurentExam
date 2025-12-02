@@ -13,7 +13,7 @@ export const createOrder = (orderData) => {
     `appel fonction createOrder avec orderData ${JSON.stringify(orderData)}`
   );
   const token = localStorage.getItem("token"); // Token de connexion
-  console.log(`token is ${token}`);
+
   return axios.post(`${API_BASE_URL}/orders`, orderData, {
     headers: {
       Authorization: `Bearer ${token}`,
