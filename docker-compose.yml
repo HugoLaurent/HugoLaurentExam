@@ -1,0 +1,53 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/mydatabase
+      - PORT=5000
+      - JWT_SECRET=6fddcda3c505f95b1bae75879062acd36de8607f7eda4b23a7c154eb26b7d708
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    ports:
+      - "27018:27017"
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - NOTIFI_SERVICE_URL=http://notifications:4002
+      - STOCK_SERVICE_URL=http://stock-management:4003
+      - GATEWAY_PORT=8000
+    depends_on:
+      - notifications
+      - stock-management
+
+  notifications:
+    build: ./microservices/notifications
+    ports:
+      - "4002:4002"
+    environment:
+      - NOTIFI_PORT=4002
+      - EMAIL_USER=balde.saikou@gmail.com
+      - EMAIL_APPLICATION_PASSWORD=vizgpuskseydmhsa
+
+  stock-management:
+    build: ./microservices/stock-management
+    ports:
+      - "4003:4003"
+    environment:
+      - PORT=4003
