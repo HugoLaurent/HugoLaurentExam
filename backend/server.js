@@ -7,7 +7,7 @@ const app = express();
 connectDB();
 
 const allowedOrigins =
-  (process.env.CORS_ORIGINS || 'http://localhost:3000,https://hugolaurentexam.onrender.com')
+  (process.env.CORS_ORIGINS || 'http://localhost:3000,https://hugolaurentexam.onrender.com,https://hugolaurent-frontend.onrender.com')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
