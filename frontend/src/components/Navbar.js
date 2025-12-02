@@ -1,22 +1,37 @@
 // src/components/Navbar.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { getCurrentUser, logout as logoutRequest } from "../services/authApi";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { cart } = useCart();
+  const [user, setUser] = useState(null);
 
-  // Simuler l'état d'authentification avec le localStorage
-  const isAuthenticated = !!localStorage.getItem("token");
-  const username = localStorage.getItem("username"); // Récupère le nom d'utilisateur si connecté
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await getCurrentUser();
+        setUser(data);
+      } catch (error) {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
 
-  const handleLogout = () => {
-    // Supprimer les informations d'authentification
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+  const handleLogout = async () => {
+    try {
+      await logoutRequest();
+    } catch (error) {
+      // ignore
+    }
+    setUser(null);
     navigate("/login");
   };
+
+  const isAuthenticated = !!user;
 
   return (
     <nav className="bg-blue-500 text-white p-4 flex justify-between items-center">
@@ -27,12 +42,10 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* Afficher le nom de l'utilisateur s'il est connecté */}
         {isAuthenticated && (
-          <span className="font-semibold">Bonjour, {username}</span>
+          <span className="font-semibold">Bonjour, {user.username}</span>
         )}
 
-        {/* Lien vers le Panier avec le nombre d'articles */}
         <Link to="/cart" className="relative">
           <span>Panier</span>
           {cart.length > 0 && (
@@ -42,12 +55,8 @@ const Navbar = () => {
           )}
         </Link>
 
-        {/*Si Admin alors lien Admin */}
-        {isAuthenticated && localStorage.getItem("role") === "admin" && (
-          <Link to="/admin">Admin</Link>
-        )}
+        {isAuthenticated && user.role === "admin" && <Link to="/admin">Admin</Link>}
 
-        {/* Lien Connexion / Déconnexion */}
         {!isAuthenticated ? (
           <>
             <Link to="/login">Connexion</Link>
@@ -58,7 +67,7 @@ const Navbar = () => {
             onClick={handleLogout}
             className="bg-red-500 px-4 py-2 rounded"
           >
-            Déconnexion
+            D�connexion
           </button>
         )}
       </div>

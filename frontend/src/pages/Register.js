@@ -1,8 +1,8 @@
 // src/pages/Register.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useToast } from "../components/ToastProvider";
+import { register as registerRequest } from "../services/authApi";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -62,9 +62,7 @@ const Register = () => {
     setError("");
 
     try {
-      const apiUrl =
-        process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";
-      await axios.post(`${apiUrl}/api/auth/register`, formData);
+      await registerRequest(formData);
       showToast("Inscription reussie ! Vous pouvez maintenant vous connecter.", "success");
       navigate("/login");
     } catch (err) {

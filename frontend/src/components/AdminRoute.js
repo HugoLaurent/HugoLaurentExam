@@ -1,15 +1,26 @@
-// src/components/AdminRoute.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { getCurrentUser } from '../services/authApi';
 
 const AdminRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
+  const [status, setStatus] = useState('loading');
+  const [role, setRole] = useState(null);
 
-  if (!token || role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data } = await getCurrentUser();
+        setRole(data.role);
+        setStatus('ok');
+      } catch (error) {
+        setStatus('no');
+      }
+    };
+    checkAuth();
+  }, []);
 
+  if (status === 'loading') return <div>Chargement...</div>;
+  if (status === 'no' || role !== 'admin') return <Navigate to="/" replace />;
   return children;
 };
 

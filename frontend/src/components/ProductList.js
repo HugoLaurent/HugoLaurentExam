@@ -1,14 +1,27 @@
-// src/components/ProtectedRoute.js
-import React from 'react';
+// src/components/ProductList.js
+// Legacy duplicate ProtectedRoute kept for compatibility; uses cookie-based auth now.
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { getCurrentUser } from '../services/authApi';
 
 const ProtectedRoute = ({ children }) => {
-    const isAuthenticated = localStorage.getItem('token'); // Vérifiez le token de connexion
+  const [status, setStatus] = useState('loading');
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-    return children;
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await getCurrentUser();
+        setStatus('ok');
+      } catch (error) {
+        setStatus('no');
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (status === 'loading') return <div>Chargement...</div>;
+  if (status === 'no') return <Navigate to="/login" replace />;
+  return children;
 };
 
 export default ProtectedRoute;

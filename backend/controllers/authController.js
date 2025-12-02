@@ -1,11 +1,18 @@
-// backend/controllers/authController.js
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const User = require("../models/User"); // modèle utilisateur
+const User = require("../models/User");
 require("dotenv").config();
 const axios = require("axios");
 const authLog = require("debug")("authRoutes:console");
-//const sendEmail = require('../services/emailService');
+
+const isProd = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  maxAge: 60 * 60 * 1000, // 1h
+  path: "/",
+};
 
 exports.login = async (req, res) => {
   const { username, password } = req.body;
@@ -21,12 +28,13 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Mot de passe incorrect" });
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user._id, role: user.role, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    res.json({ token, role: user.role, username: user.username });
+    res.cookie("token", token, cookieOptions);
+    res.json({ role: user.role, username: user.username });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
   }
@@ -38,7 +46,6 @@ exports.register = async (req, res) => {
     return res.status(400).json({ message: "Tous les champs sont requis." });
   }
 
-  // Trim input fields (remove leading/trailing spaces and normalize email)
   if (typeof username === "string") req.body.username = username.trim();
   if (typeof email === "string") req.body.email = email.trim().toLowerCase();
   if (typeof password === "string") req.body.password = password.trim();
@@ -85,7 +92,6 @@ exports.register = async (req, res) => {
   }
 
   try {
-    // Vérifier si l'email ou le nom d'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -93,28 +99,27 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Cet email est déjà utilisé." });
     }
 
-    // Créer un nouvel utilisateur
     const user = new User({ username, email, password });
     await user.save();
 
     authLog(`user after creation => ${JSON.stringify(user)}`);
-
-    // Envoyer un email de bienvenue
-    // await sendEmail(
-    //   email,
-    //   'Bienvenue dans notre application',
-    //   `Bonjour ${username},\n\nMerci de vous être inscrit. Nous sommes ravis de vous accueillir !`
-    // );
-
-    // await axios.post('http://localhost:4002/notify', {
-    //   to: email,
-    //   subject: 'Bienvenue dans notre application',
-    //   text: `Bonjour ${username},\n\nMerci de vous être inscrit. Nous sommes ravis de vous accueillir !`,
-    // });
 
     res.status(201).json({ message: "Utilisateur créé avec succès." });
   } catch (error) {
     console.error("Erreur lors de l'inscription", error);
     res.status(500).json({ message: "Une erreur est survenue." });
   }
+};
+
+exports.me = async (req, res) => {
+  return res.json({
+    userId: req.user.userId,
+    role: req.user.role,
+    username: req.user.username,
+  });
+};
+
+exports.logout = async (req, res) => {
+  res.cookie("token", "", { ...cookieOptions, maxAge: 0 });
+  res.json({ message: "Déconnecté" });
 };

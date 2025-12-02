@@ -1,8 +1,8 @@
 // src/pages/Login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useToast } from "../components/ToastProvider";
+import { login as loginRequest } from "../services/authApi";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
@@ -15,18 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const apiUrl =
-        process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";
-      const response = await axios.post(
-        `${apiUrl}/api/auth/login`,
-        credentials
-      );
-      const { token, role, username } = response.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("username", username);
-      localStorage.setItem("role", role);
-
+      await loginRequest(credentials);
       showToast("Connexion reussie", "success");
       navigate("/");
     } catch (error) {

@@ -4,6 +4,7 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 
 const app = express();
+app.set('trust proxy', 1);
 connectDB();
 
 const allowedOrigins =
@@ -17,6 +18,7 @@ app.use(
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 );
 app.use(express.json());
