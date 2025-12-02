@@ -3,6 +3,8 @@ const axios = require('axios');
 const Order = require('../models/Order'); // Modèle pour les commandes
 const Product = require('../models/Product'); // Modèle pour les produits
 
+const NOTIFI_SERVICE_URL = process.env.NOTIFI_SERVICE_URL || 'http://localhost:3001';
+
 // Récupérer toutes les commandes
 exports.getOrders = async (req, res) => {
   try {
@@ -20,7 +22,7 @@ exports.updateOrderStatus = async (req, res) => {
 
   try {
     await Order.findByIdAndUpdate(id, { status });
-    await axios.post('http://localhost:3001/notify', {
+    await axios.post(`${NOTIFI_SERVICE_URL}/notify`, {
       message: `Le statut de la commande ${id} a été mis à jour en "${status}".`,
     });
     res.json({ message: `Statut de la commande ${id} mis à jour` });
@@ -35,7 +37,7 @@ exports.validateOrder = async (req, res) => {
 
   try {
     await Order.findByIdAndUpdate(id, { status: 'Validée' });
-    await axios.post('http://localhost:3001/notify', {
+    await axios.post(`${NOTIFI_SERVICE_URL}/notify`, {
       message: `La commande ${id} a été validée.`,
     });
     res.json({ message: `Commande ${id} validée` });
@@ -61,7 +63,7 @@ exports.updateProductStock = async (req, res) => {
 
   try {
     await Product.findByIdAndUpdate(id, { stock });
-    await axios.post('http://localhost:3001/notify', {
+    await axios.post(`${NOTIFI_SERVICE_URL}/notify`, {
       message: `Le stock du produit ${id} a été mis à jour à ${stock}.`,
     });
     res.json({ message: `Stock du produit ${id} mis à jour` });
