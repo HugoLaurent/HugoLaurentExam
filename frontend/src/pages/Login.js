@@ -13,7 +13,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const apiUrl = process.env.REACT_APP_API_URL;
+      const apiUrl =
+        process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";
       const response = await axios.post(
         `${apiUrl}/api/auth/login`,
         credentials

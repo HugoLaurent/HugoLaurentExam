@@ -23,7 +23,8 @@ const Register = () => {
     e.preventDefault();
     setError("");
     try {
-      const apiUrl = process.env.REACT_APP_API_URL;
+      const apiUrl =
+        process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";
       await axios.post(`${apiUrl}/api/auth/register`, formData);
       alert("Inscription reussie ! Vous pouvez maintenant vous connecter.");
       navigate("/login");
