@@ -2,6 +2,7 @@
 const axios = require("axios");
 const mongoose = require("mongoose");
 const Order = require("../models/Order");
+const Product = require("../models/Product");
 const orderLog = require("debug")("orderRoutes:console");
 
 const GATEWAY_SERVICE_URL =
@@ -94,6 +95,25 @@ exports.createOrder = async (req, res) => {
       (acc, { price, quantity }) => acc + price * quantity,
       0
     );
+
+    // Vérifier le stock disponible pour chaque produit
+    const productIds = orderDetails.map((item) => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
+    if (products.length !== orderDetails.length) {
+      return res.status(400).json({
+        message: "Produit introuvable pour un des articles.",
+      });
+    }
+    for (const item of orderDetails) {
+      const product = products.find(
+        (p) => p._id.toString() === item.productId.toString()
+      );
+      if (!product || product.stock <= 0 || product.stock < item.quantity) {
+        return res.status(400).json({
+          message: `Stock insuffisant pour le produit ${item.productId}.`,
+        });
+      }
+    }
 
     const newOrder = new Order({
       userId,
