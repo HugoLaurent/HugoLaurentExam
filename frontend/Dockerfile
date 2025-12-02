@@ -5,11 +5,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+RUN npm install react-scripts@5.0.1 -g
+
+RUN npm audit fix --force
+
 COPY . .
 
-# Inject frontend API base URL at build time (Render passes REACT_APP_API_URL)
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
 
 RUN npm run build
 
