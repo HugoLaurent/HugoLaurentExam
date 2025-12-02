@@ -1,9 +1,10 @@
 // backend/controllers/adminController.js
-const axios = require('axios');
-const Order = require('../models/Order'); // Modèle pour les commandes
-const Product = require('../models/Product'); // Modèle pour les produits
+const axios = require("axios");
+const Order = require("../models/Order"); // Modèle pour les commandes
+const Product = require("../models/Product"); // Modèle pour les produits
 
-const NOTIFI_SERVICE_URL = process.env.NOTIFI_SERVICE_URL || 'http://localhost:3001';
+const NOTIFI_SERVICE_URL =
+  process.env.NOTIFI_SERVICE_URL || "http://localhost:3001";
 
 // Récupérer toutes les commandes
 exports.getOrders = async (req, res) => {
@@ -11,7 +12,9 @@ exports.getOrders = async (req, res) => {
     const orders = await Order.find();
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des commandes' });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la récupération des commandes" });
   }
 };
 
@@ -27,7 +30,9 @@ exports.updateOrderStatus = async (req, res) => {
     });
     res.json({ message: `Statut de la commande ${id} mis à jour` });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur de mise à jour du statut de la commande' });
+    res
+      .status(500)
+      .json({ message: "Erreur de mise à jour du statut de la commande" });
   }
 };
 
@@ -36,13 +41,15 @@ exports.validateOrder = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await Order.findByIdAndUpdate(id, { status: 'Validée' });
+    await Order.findByIdAndUpdate(id, { status: "Validée" });
     await axios.post(`${NOTIFI_SERVICE_URL}/notify`, {
       message: `La commande ${id} a été validée.`,
     });
     res.json({ message: `Commande ${id} validée` });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la validation de la commande' });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la validation de la commande" });
   }
 };
 
@@ -52,7 +59,9 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des produits' });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la récupération des produits" });
   }
 };
 
@@ -68,6 +77,8 @@ exports.updateProductStock = async (req, res) => {
     });
     res.json({ message: `Stock du produit ${id} mis à jour` });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la mise à jour du stock du produit' });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la mise à jour du stock du produit" });
   }
 };
