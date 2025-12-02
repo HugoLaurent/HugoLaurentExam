@@ -1,37 +1,37 @@
 // src/components/Navbar.js
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { cart } = useCart();
 
   // Simuler l'état d'authentification avec le localStorage
-  const isAuthenticated = !!localStorage.getItem('token');
-  const username = localStorage.getItem('username'); // Récupère le nom d'utilisateur si connecté
+  const isAuthenticated = !!localStorage.getItem("token");
+  const username = localStorage.getItem("username"); // Récupère le nom d'utilisateur si connecté
 
   const handleLogout = () => {
     // Supprimer les informations d'authentification
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    navigate('/login');
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    navigate("/login");
   };
 
   return (
     <nav className="bg-blue-500 text-white p-4 flex justify-between items-center">
       <div className="flex items-center space-x-4">
-        <Link to="/" className="text-xl font-bold">Mon Application</Link>
+        <Link to="/" className="text-xl font-bold">
+          Mon Application
+        </Link>
       </div>
-      
+
       <div className="flex items-center space-x-4">
         {/* Afficher le nom de l'utilisateur s'il est connecté */}
         {isAuthenticated && (
-          <span className="font-semibold">
-            Bonjour, {username}
-          </span>
+          <span className="font-semibold">Bonjour, {username}</span>
         )}
-        
+
         {/* Lien vers le Panier avec le nombre d'articles */}
         <Link to="/cart" className="relative">
           <span>Panier</span>
@@ -41,7 +41,12 @@ const Navbar = () => {
             </span>
           )}
         </Link>
-        
+
+        {/*Si Admin alors lien Admin */}
+        {isAuthenticated && localStorage.getItem("role") === "admin" && (
+          <Link to="/admin">Admin</Link>
+        )}
+
         {/* Lien Connexion / Déconnexion */}
         {!isAuthenticated ? (
           <>
@@ -49,7 +54,10 @@ const Navbar = () => {
             <Link to="/register">Inscription</Link>
           </>
         ) : (
-          <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded">
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 px-4 py-2 rounded"
+          >
             Déconnexion
           </button>
         )}
