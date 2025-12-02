@@ -21,7 +21,44 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.username || !formData.email || !formData.password) {
+      setError("Tous les champs sont requis.");
+      return;
+    }
+
+    if (!formData.email.includes("@")) {
+      setError("L'adresse email n'est pas valide.");
+      return;
+    }
+
+    if (formData.password.length < 12) {
+      setError("Le mot de passe doit contenir au moins 12 caracteres.");
+      return;
+    }
+
+    if (formData.password.includes(" ")) {
+      setError("Le mot de passe ne doit pas contenir d'espaces.");
+      return;
+    }
+
+    if (
+      !/[A-Z]/.test(formData.password) ||
+      !/[a-z]/.test(formData.password) ||
+      !/[0-9]/.test(formData.password)
+    ) {
+      setError(
+        "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre."
+      );
+      return;
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      setError("Le mot de passe doit contenir au moins un caractère spécial.");
+      return;
+    }
     setError("");
+
     try {
       const apiUrl =
         process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com";

@@ -1,53 +1,103 @@
 // backend/controllers/authController.js
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User'); // modèle utilisateur
-require('dotenv').config();
-const axios = require('axios');
-const authLog = require('debug')('authRoutes:console')
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const User = require("../models/User"); // modèle utilisateur
+require("dotenv").config();
+const axios = require("axios");
+const authLog = require("debug")("authRoutes:console");
 //const sendEmail = require('../services/emailService');
 
 exports.login = async (req, res) => {
   const { username, password } = req.body;
- 
-
 
   try {
     const user = await User.findOne({ username });
- 
-    if (!user) return res.status(400).json({ message: 'Utilisateur non trouvé' });
+
+    if (!user)
+      return res.status(400).json({ message: "Utilisateur non trouvé" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Mot de passe incorrect' });
+    if (!isMatch)
+      return res.status(400).json({ message: "Mot de passe incorrect" });
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     res.json({ token, role: user.role, username: user.username });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
-
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
-  authLog(`username is ${username} email is ${email} password is ${password}`);
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Tous les champs sont requis." });
+  }
+
+  // Trim input fields (remove leading/trailing spaces and normalize email)
+  if (typeof username === "string") req.body.username = username.trim();
+  if (typeof email === "string") req.body.email = email.trim().toLowerCase();
+  if (typeof password === "string") req.body.password = password.trim();
+
+  if (password.length < 12) {
+    return res.status(400).json({
+      message: "Le mot de passe doit contenir au moins 12 caractères.",
+    });
+  }
+
+  if (
+    !/[A-Z]/.test(password) ||
+    !/[a-z]/.test(password) ||
+    !/[0-9]/.test(password)
+  ) {
+    return res.status(400).json({
+      message:
+        "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre.",
+    });
+  }
+
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return res.status(400).json({
+      message: "Le mot de passe doit contenir au moins un caractère spécial.",
+    });
+  }
+
+  if (/\s/.test(password)) {
+    return res.status(400).json({
+      message: "Le mot de passe ne doit pas contenir d'espaces.",
+    });
+  }
+
+  if (/\s/.test(username)) {
+    return res.status(400).json({
+      message: "Le nom d'utilisateur ne doit pas contenir d'espaces.",
+    });
+  }
+
+  if (/\s/.test(email)) {
+    return res.status(400).json({
+      message: "L'email ne doit pas contenir d'espaces.",
+    });
+  }
 
   try {
     // Vérifier si l'email ou le nom d'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
-    
+
     if (existingUser) {
-      authLog(`user exist => ${JSON.stringify(existingUser)}`)
-      return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+      authLog(`user exist => ${JSON.stringify(existingUser)}`);
+      return res.status(400).json({ message: "Cet email est déjà utilisé." });
     }
 
     // Créer un nouvel utilisateur
     const user = new User({ username, email, password });
     await user.save();
 
-    authLog(`user after creation => ${JSON.stringify(user)}`)
+    authLog(`user after creation => ${JSON.stringify(user)}`);
 
     // Envoyer un email de bienvenue
     // await sendEmail(
@@ -62,9 +112,9 @@ exports.register = async (req, res) => {
     //   text: `Bonjour ${username},\n\nMerci de vous être inscrit. Nous sommes ravis de vous accueillir !`,
     // });
 
-    res.status(201).json({ message: 'Utilisateur créé avec succès.' });
+    res.status(201).json({ message: "Utilisateur créé avec succès." });
   } catch (error) {
-    console.error('Erreur lors de l\'inscription', error);
-    res.status(500).json({ message: 'Une erreur est survenue.' });
+    console.error("Erreur lors de l'inscription", error);
+    res.status(500).json({ message: "Une erreur est survenue." });
   }
 };
