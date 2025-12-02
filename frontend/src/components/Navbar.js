@@ -1,4 +1,4 @@
-// src/components/Navbar.js
+﻿// src/components/Navbar.js
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -10,12 +10,25 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    const cachedUser =
+      localStorage.getItem("username") || localStorage.getItem("role")
+        ? {
+            username: localStorage.getItem("username"),
+            role: localStorage.getItem("role"),
+          }
+        : null;
+    if (cachedUser) setUser(cachedUser);
+
     const fetchUser = async () => {
       try {
         const { data } = await getCurrentUser();
         setUser(data);
+        if (data?.username) localStorage.setItem("username", data.username);
+        if (data?.role) localStorage.setItem("role", data.role);
       } catch (error) {
         setUser(null);
+        localStorage.removeItem("username");
+        localStorage.removeItem("role");
       }
     };
     fetchUser();
@@ -28,6 +41,8 @@ const Navbar = () => {
       // ignore
     }
     setUser(null);
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
     navigate("/login");
   };
 
@@ -67,7 +82,7 @@ const Navbar = () => {
             onClick={handleLogout}
             className="bg-red-500 px-4 py-2 rounded"
           >
-            D�connexion
+            Déconnexion
           </button>
         )}
       </div>
@@ -76,3 +91,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

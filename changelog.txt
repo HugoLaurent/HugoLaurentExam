@@ -1,0 +1,28 @@
+Changelog — modifications récentes
+
+Authentification
+- Token JWT stocké dans un cookie httpOnly et sameSite (secure en production) lors du login.
+- Nouvelles routes : /auth/me et /auth/logout.
+- Middleware lit le token depuis le cookie (fallback sur l'en-tête) et protège les routes.
+
+CORS et serveur
+- Liste blanche CORS configurable via CORS_ORIGINS, credentials: true activé.
+- trust proxy activé pour accepter correctement les cookies cross-site.
+
+Commandes et stock
+- Vérification du stock en base avant création d'une commande pour chaque article.
+- Bouton "Ajouter au panier" désactivé côté front si le stock est à zéro ; affichage du stock.
+
+Front-end
+- Axios envoie désormais les cookies (withCredentials) ; suppression de l'utilisation de localStorage pour le token.
+- ProtectedRoute / AdminRoute / Navbar s'appuient sur /auth/me (cookie) pour l'état de session.
+- Login/Register passent par les services d'auth et affichent des toasts d'information.
+
+Produits et données
+- Validation et nettoyage stricts : ObjectId, enums, valeurs numériques, suppression des balises HTML/JS.
+- Normalisation des statuts de commandes/produits côté backend pour éviter de stocker ou renvoyer du payload HTML/JS.
+
+Sécurité et maintenance
+- Validation, sanitation et restrictions appliquées aux mots de passe, noms d'utilisateur et adresses e-mail.
+- CORS verrouillé (whitelist), contrôle des en-têtes et des méthodes pour limiter l'accès à l'API.
+- Suppression de tous les console.log exposant des informations sensibles.

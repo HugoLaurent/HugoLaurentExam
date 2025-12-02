@@ -12,8 +12,12 @@ const AdminRoute = ({ children }) => {
         const { data } = await getCurrentUser();
         setRole(data.role);
         setStatus('ok');
+        if (data?.username) localStorage.setItem('username', data.username);
+        if (data?.role) localStorage.setItem('role', data.role);
       } catch (error) {
         setStatus('no');
+        localStorage.removeItem('username');
+        localStorage.removeItem('role');
       }
     };
     checkAuth();

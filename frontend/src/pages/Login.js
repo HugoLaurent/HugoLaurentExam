@@ -15,7 +15,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await loginRequest(credentials);
+      const { data } = await loginRequest(credentials);
+      if (data?.username) localStorage.setItem("username", data.username);
+      if (data?.role) localStorage.setItem("role", data.role);
       showToast("Connexion reussie", "success");
       navigate("/");
     } catch (error) {
