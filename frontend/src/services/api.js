@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Use backend URL from env when provided, fallback to local dev backend
 const API_BASE_URL = `${
-  process.env.REACT_APP_API_URL || "http://localhost:5000"
+  process.env.REACT_APP_API_URL || "https://hugolaurentexam.onrender.com"
 }/api`;
 
 export const fetchProducts = () => axios.get(`${API_BASE_URL}/products`);
