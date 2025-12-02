@@ -1,15 +1,15 @@
 // src/pages/Register.js
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
+    username: "",
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -21,26 +21,31 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
       const apiUrl = process.env.REACT_APP_API_URL;
       await axios.post(`${apiUrl}/api/auth/register`, formData);
-      alert('Inscription reussie ! Vous pouvez maintenant vous connecter.');
-      navigate('/login');
+      alert("Inscription reussie ! Vous pouvez maintenant vous connecter.");
+      navigate("/login");
     } catch (err) {
       if (err.response) {
         const { message } = err.response.data;
-        setError(message || 'Une erreur est survenue lors de la creation du compte.');
+        setError(
+          message || "Une erreur est survenue lors de la creation du compte."
+        );
       } else {
-        console.error('Erreur reseau ou serveur', err);
-        setError('Une erreur est survenue. Veuillez reessayer.');
+        console.error("Erreur reseau ou serveur", err);
+        setError("Une erreur est survenue. Veuillez reessayer.");
       }
     }
   };
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-80">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded shadow-md w-80"
+      >
         <h2 className="text-2xl font-bold mb-4 text-center">Inscription</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <input
@@ -67,7 +72,12 @@ const Register = () => {
           onChange={handleChange}
           className="border border-gray-300 p-2 w-full mb-4"
         />
-        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded">S'inscrire</button>
+        <button
+          type="submit"
+          className="bg-blue-500 text-white p-2 w-full rounded"
+        >
+          S'inscrire
+        </button>
       </form>
     </div>
   );
